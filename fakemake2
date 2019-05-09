@@ -1,0 +1,2 @@
+x86_64-w64-mingw32-gcc -std=gnu11 -g -Wall -O3 -DWIN_VERSION -DWIN_EXT_VERSION sandbox.c -o sandbox
+./sandbox
