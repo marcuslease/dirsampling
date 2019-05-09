@@ -1,8 +1,9 @@
 x86_64-w64-mingw32-gcc -std=gnu11 -c -DWIN_VERSION -DWIN_EXT_VERSION \
 	-I/cygdrive/c/Users/mdl1550/Documents/Max\ 8/Packages/max-sdk-7.3.3/source/c74support/max-includes `pkg-config \
-	--cflags glib-2.0` dirsampling.c;
-x86_64-w64-mingw32-gcc -std=gnu11 -shared -o dirsampling.mxe64 \
+	--cflags glib-2.0` src/dirsampling.c;
+x86_64-w64-mingw32-gcc -std=gnu11 -shared -o lib/dirsampling.mxe64 \
 	dirsampling.o \
 	-L/cygdrive/c/Users/mdl1550/Documents/Max\ 8/Packages/max-sdk-7.3.3/source/c74support/max-includes/x64 -lMaxAPI `pkg-config \
 	--libs glib-2.0`;
-cp dirsampling.mxe64 /cygdrive/c/Users/mdl1550/Documents/Max\ 8/Library
+cp lib/dirsampling.mxe64 /cygdrive/c/Users/mdl1550/Documents/Max\ 8/Library
+rm -rf dirsampling.o
