@@ -23,10 +23,13 @@ typedef struct dirsampling
 	void *outlet1;
 } dirsampling;
 
+// hash table of the results of dir walking
+t_hashtab *dirsampling_dir_hash;
+
 void *dirsampling_new();
 void dirsampling_free();
 void dirsampling_bang(dirsampling *);
-void dirsampling_dir(dirsampling *, t_symbol);
+void dirsampling_dir(dirsampling *, t_symbol *);
 int dirsampling_nftw_callback(const char *,
                               const struct stat *,
                               int,
@@ -34,9 +37,9 @@ int dirsampling_nftw_callback(const char *,
 void dirsampling_send_hardcoded_samples(dirsampling *);
 bool dirsampling_dir_accessible(const char *);
 
-// define class
 void ext_main(void *r)
 {
+	// define class
 	t_class *c;
 	c = class_new(
 		"dirsampling",
@@ -51,6 +54,9 @@ void ext_main(void *r)
 	class_addmethod(c, (method)dirsampling_dir, "dir", A_SYM, 0);
 	class_register(CLASS_BOX, c);
 	dirsampling_class = c;
+
+	// initialize hash table
+	dirsampling_dir_hash = (t_hashtab *)hashtab_new(0);
 }
 
 // initialize instance
@@ -72,22 +78,33 @@ void dirsampling_bang(dirsampling *x)
 	post("in bang");
 }
 
-dirsampling *dirsampling_nftw_me;
-int dirsampling_nftw_counter;
-void dirsampling_dir(dirsampling *x, t_symbol dir)
+int dirsampling_counter;
+t_symbol *dirsampling_current_dir;
+
+void dirsampling_dir(dirsampling *x, t_symbol *dir)
 {
-	post("dir: %s", dir.s_name);
-	dirsampling_nftw_me = x;
-	dirsampling_nftw_counter = 0;
-	nftw(
-		dir.s_name,
+	dirsampling_current_dir = dir;
+
+	post("dir: %s", dir->s_name);
+	// TODO check if entry already exists
+	t_atomarray *arr = atomarray_new(0, NULL);
+	hashtab_store(
+		dirsampling_dir_hash,
+		dirsampling_current_dir,
+		(t_object *)arr
+	);
+	// TODO do we need a counter?
+	dirsampling_counter = 0;
+
+	int err = nftw(
+		dir->s_name,
 		dirsampling_nftw_callback,
 		4,
-		0	
+		0
 	);
-	dirsampling_nftw_me = NULL;
-	dirsampling_nftw_counter = 0;
 
+	post("err: %d", err);
+	post("counter: %d", dirsampling_counter);
 	//dirsampling_send_hardcoded_samples(x);
 }
 
@@ -97,14 +114,21 @@ int dirsampling_nftw_callback(const char *file,
                               struct FTW *ftw)
 {
 	if (i != FTW_F) return 0;
-	dirsampling_nftw_counter++;
-
+	post("counter: %d", dirsampling_counter);
 	post("file: %s", file);
 
-	t_atom argv[2];
-	atom_setlong(argv, dirsampling_nftw_counter);
-	atom_setsym(argv + 1, gensym(file));
-	outlet_list(dirsampling_nftw_me->outlet1, NULL, 2, argv);
+	t_atomarray *arr;
+	hashtab_lookup(
+		dirsampling_dir_hash,
+		dirsampling_current_dir,
+		(t_object **)arr
+	);
+	// ??? if this is a pointer, max dies and i idk why
+	t_atom val;
+	atom_setsym(&val, gensym(file));
+	// ??? bombs with this line
+//	atomarray_appendatom(arr, &val);
+	dirsampling_counter++;
 
 	return 0;
 }
