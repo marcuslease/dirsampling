@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <ftw.h>
 #include <errno.h>
 
 const int DEFAULT_NUM_SAMPLES = 99;
@@ -26,6 +27,10 @@ void *dirsampling_new();
 void dirsampling_free();
 void dirsampling_bang(dirsampling *);
 void dirsampling_dir(dirsampling *, t_symbol);
+int dirsampling_nftw_callback(const char *,
+                              const struct stat *,
+                              int,
+                              struct FTW *);
 void dirsampling_send_hardcoded_samples(dirsampling *);
 bool dirsampling_dir_accessible(const char *);
 
@@ -67,11 +72,41 @@ void dirsampling_bang(dirsampling *x)
 	post("in bang");
 }
 
+dirsampling *dirsampling_nftw_me;
+int dirsampling_nftw_counter;
 void dirsampling_dir(dirsampling *x, t_symbol dir)
 {
-	post("in dir: %s", dir.s_name);
-	dirsampling_send_hardcoded_samples(x);
+	post("dir: %s", dir.s_name);
+	dirsampling_nftw_me = x;
+	dirsampling_nftw_counter = 0;
+	nftw(
+		dir.s_name,
+		dirsampling_nftw_callback,
+		4,
+		0	
+	);
+	dirsampling_nftw_me = NULL;
+	dirsampling_nftw_counter = 0;
 
+	//dirsampling_send_hardcoded_samples(x);
+}
+
+int dirsampling_nftw_callback(const char *file,
+                              const struct stat *st,
+                              int i,
+                              struct FTW *ftw)
+{
+	if (i != FTW_F) return 0;
+	dirsampling_nftw_counter++;
+
+	post("file: %s", file);
+
+	t_atom argv[2];
+	atom_setlong(argv, dirsampling_nftw_counter);
+	atom_setsym(argv + 1, gensym(file));
+	outlet_list(dirsampling_nftw_me->outlet1, NULL, 2, argv);
+
+	return 0;
 }
 
 void dirsampling_send_hardcoded_samples(dirsampling *x)
