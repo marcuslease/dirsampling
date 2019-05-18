@@ -3,7 +3,6 @@ a Max object to get random samplings of audio files from a directory
 
 ## todo
 * better randomize sampling
-* non-ascii chars in filenames breaks
 * allow configuring size of sampling
 * in-memory cache
 * real makefile

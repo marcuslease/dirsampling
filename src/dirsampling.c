@@ -5,8 +5,6 @@
 #include <stdbool.h>
 #include <dirent.h>
 #include <ftw.h>
-#include <time.h>
-
 
 const long DIRSAMPLING_DEFAULT_NUM_SAMPLES = 100;
 
@@ -81,9 +79,9 @@ void dirsampling_free() {
  */
 void dirsampling_dir(dirsampling *x, t_symbol *dir) {
 	if (!dirsampling_is_dir_accessible(dir->s_name)) {
-		object_error((t_object *)x, "dir (%s) not accessible", dir->s_name);
+		object_error((t_object *)x, "dir not accessible (%s)", dir->s_name);
 		return;
-	}	
+	}
 
 	char *func;
 	long status;
@@ -106,7 +104,7 @@ void dirsampling_dir(dirsampling *x, t_symbol *dir) {
 		long random_i = min + rand() / (RAND_MAX / (max - min + 1) + 1);
 
 		t_atom cur[2];
-		atom_setlong(cur, i);
+		status = atom_setlong(cur, i);
 		if (status != 0) { strcpy(func, "atom_setlong"); goto error; }
 		status = atomarray_getindex(dirsampling_buffer, random_i, cur + 1);
 		if (status != 0) { strcpy(func, "atomarray_getindex"); goto error; }
