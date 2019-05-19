@@ -5,6 +5,5 @@ a Max object to get random samplings of audio files from a directory
 * better randomize sampling
 * allow configuring size of sampling
 * in-memory cache
-* real makefile
 * research portability
 * macros to clean up error handling?

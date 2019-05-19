@@ -5,6 +5,13 @@
 #include <stdbool.h>
 #include <dirent.h>
 #include <ftw.h>
+#include <windows.h>
+#include <Wincrypt.h>
+
+union dirsampling_bytes2long {
+	byte array[4];
+	unsigned long integer;
+} dirsampling_bytes2long;
 
 const long DIRSAMPLING_DEFAULT_NUM_SAMPLES = 100;
 
@@ -32,7 +39,7 @@ int dirsampling_nftw_callback(const char *,
                               struct FTW *);
 bool dirsampling_is_dir_accessible(const char *);
 bool dirsampling_is_file_audio(const char *);
-long dirsampling_random(int, int, int);
+int dirsampling_rand(long, long, long *);
 
 /*
  * buffer for audio files within a dir
@@ -99,9 +106,10 @@ void dirsampling_dir(dirsampling *x, t_symbol *dir) {
 	long len = atomarray_getsize(dirsampling_buffer);
 	int min = 0;
 	int max = len - 1;
-	srand(time(0));
 	for (int i = 0; i < DIRSAMPLING_DEFAULT_NUM_SAMPLES; i++) {
-		long random_i = min + rand() / (RAND_MAX / (max - min + 1) + 1);
+		long random_i;
+		status = dirsampling_rand(min, max, &random_i);
+		if (status != 0) { strcpy(func, "dirsampling_rand"); goto error; }
 
 		t_atom cur[2];
 		status = atom_setlong(cur, i);
@@ -165,4 +173,38 @@ bool dirsampling_is_file_audio(const char *file) {
 		return true;
 	else
 		return false;
+}
+
+int dirsampling_rand(long min, long max, long *integer) {
+	int status;
+	HCRYPTPROV hCryptProv;
+	byte result[4];
+
+	int success = CryptAcquireContext(
+		&hCryptProv,
+		NULL,
+		"Microsoft Base Cryptographic Provider v1.0",
+		PROV_RSA_FULL,
+		CRYPT_VERIFYCONTEXT
+	);
+	if (!success) { status = 1; goto error; };
+	success = CryptGenRandom(hCryptProv, 4, result);
+	if (!success) {
+		success = CryptReleaseContext(hCryptProv, 0);
+		if (success) { status = 2; goto error; }
+		else { status = 3; goto error; }
+	}
+	success = CryptReleaseContext(hCryptProv, 0);
+	if (!success) { status = 4; goto error; }
+
+	for (int i = 0; i < 4; i++) {
+		dirsampling_bytes2long.array[i] = result[i];
+	}
+//	post("integer %ld", dirsampling_bytes2long.integer);
+//	post("rand %ld", (dirsampling_bytes2long.integer % (max - min + 1)) + min);
+	*integer = (dirsampling_bytes2long.integer % (max - min + 1)) + min;
+
+	return 0;
+error:
+	return status;
 }
