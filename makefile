@@ -18,6 +18,7 @@ install :
 
 .PHONY : clean
 clean :
+	rm src/dirsampling.o
 	rm lib/dirsampling.mxe64
 
 .PHONY : all

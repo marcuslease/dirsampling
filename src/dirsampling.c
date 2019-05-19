@@ -1,4 +1,5 @@
 #define MAXAPI_USE_MSCRT
+#define DIRSAMPLING_RAND_BYTE_LEN 2
 #include "ext.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,12 +9,12 @@
 #include <windows.h>
 #include <Wincrypt.h>
 
+const long DIRSAMPLING_DEFAULT_NUM_SAMPLES = 100;
+
 union dirsampling_bytes2long {
-	byte array[4];
+	byte array[DIRSAMPLING_RAND_BYTE_LEN];
 	unsigned long integer;
 } dirsampling_bytes2long;
-
-const long DIRSAMPLING_DEFAULT_NUM_SAMPLES = 100;
 
 /*
  * class pointer
@@ -178,7 +179,7 @@ bool dirsampling_is_file_audio(const char *file) {
 int dirsampling_rand(long min, long max, long *integer) {
 	int status;
 	HCRYPTPROV hCryptProv;
-	byte result[4];
+	byte result[DIRSAMPLING_RAND_BYTE_LEN];
 
 	int success = CryptAcquireContext(
 		&hCryptProv,
@@ -188,7 +189,7 @@ int dirsampling_rand(long min, long max, long *integer) {
 		CRYPT_VERIFYCONTEXT
 	);
 	if (!success) { status = 1; goto error; };
-	success = CryptGenRandom(hCryptProv, 4, result);
+	success = CryptGenRandom(hCryptProv, DIRSAMPLING_RAND_BYTE_LEN, result);
 	if (!success) {
 		success = CryptReleaseContext(hCryptProv, 0);
 		if (success) { status = 2; goto error; }
@@ -197,11 +198,11 @@ int dirsampling_rand(long min, long max, long *integer) {
 	success = CryptReleaseContext(hCryptProv, 0);
 	if (!success) { status = 4; goto error; }
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < DIRSAMPLING_RAND_BYTE_LEN; i++) {
 		dirsampling_bytes2long.array[i] = result[i];
 	}
-//	post("integer %ld", dirsampling_bytes2long.integer);
-//	post("rand %ld", (dirsampling_bytes2long.integer % (max - min + 1)) + min);
+	//post("integer %ld", dirsampling_bytes2long.integer);
+	//post("rand %ld", (dirsampling_bytes2long.integer % (max - min + 1)) + min);
 	*integer = (dirsampling_bytes2long.integer % (max - min + 1)) + min;
 
 	return 0;
