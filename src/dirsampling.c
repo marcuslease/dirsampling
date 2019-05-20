@@ -201,8 +201,8 @@ int dirsampling_rand(long min, long max, long *integer) {
 	for (int i = 0; i < DIRSAMPLING_RAND_BYTE_LEN; i++) {
 		dirsampling_bytes2long.array[i] = result[i];
 	}
-	post("integer %ld", dirsampling_bytes2long.integer);
-	post("rand %ld", (dirsampling_bytes2long.integer % (max - min + 1)) + min);
+	//post("integer %ld", dirsampling_bytes2long.integer);
+	//post("rand %ld", (dirsampling_bytes2long.integer % (max - min + 1)) + min);
 	*integer = (dirsampling_bytes2long.integer % (max - min + 1)) + min;
 
 	return 0;
