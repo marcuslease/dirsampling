@@ -1,6 +1,6 @@
-# kindly set these env vars for us befure running
-LIBEXECDIR=$(DIRSAMPLING_LIBEXECDIR)
-MAX_INCLUDE=$(DIRSAMPLING_MAX_INCLUDE)
+# kindly set these env vars for us befure running (DIRSAMPLING prefix optional)
+LIBEXECDIR?=$(DIRSAMPLING_LIBEXECDIR)
+MAX_INCLUDE?=$(DIRSAMPLING_MAX_INCLUDE)
 
 CC=x86_64-w64-mingw32-gcc
 CFLAGS=-std=gnu11 -DWIN_VERSION -DWIN_EXT_VERSION -I"$(MAX_INCLUDE)"

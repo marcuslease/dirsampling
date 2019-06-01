@@ -126,7 +126,7 @@ void dirsampling_dir(dirsampling *x, t_symbol *dir) {
 error:
 	object_error(
 		(t_object *)x,
-		"%s() returned (%ld) in dirsampling_dir()",
+		"%s() returned \"%ld\" in dirsampling_dir()",
 		 func, status
 	);
 }
@@ -150,7 +150,7 @@ int dirsampling_nftw_callback(const char *file,
 
 	return 0;
 error:
-	error("%s() returned (%ld) in dirsampling_nftw_callback()", func, status);
+	error("%s() returned \"%ld\" in dirsampling_nftw_callback()", func, status);
 }
 
 bool dirsampling_is_dir_accessible(const char *dir) {
